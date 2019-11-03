@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">AR RC Car</string>
+    <string name="textStart">Start</string>
+    <string name="textStop">Stop Pin</string>
+    <string name="textPin">Pin</string>
+    <string name="textMode">Mode</string>
+    <string name="textBluetoothDevices">Bluetooth Devices</string>
+</resources>

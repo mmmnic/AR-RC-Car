@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <ListView
+        android:id="@+id/idLvBluetoothDevices"
+        android:layout_width="300dp"
+        android:layout_height="500dp"
+        android:layout_gravity="center"/>
+
+    <fragment
+        android:id="@+id/sceneform_ux_fragment"
+        android:name="com.google.ar.sceneform.ux.ArFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <Button
+        android:id="@+id/idBtnStart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal | bottom"
+        android:layout_marginBottom="20dp"
+        android:backgroundTint="#00FF00"
+        android:text="@string/textStart" />
+
+    <Button
+        android:id="@+id/idBtnSetPin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal | bottom"
+        android:layout_marginStart="100dp"
+        android:layout_marginBottom="20dp"
+        android:text="@string/textPin"/>
+
+    <Button
+        android:id="@+id/idBtnStop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal | bottom"
+        android:layout_marginEnd="100dp"
+        android:layout_marginBottom="20dp"
+        android:text="@string/textStop"
+        />
+
+    <Button
+        android:id="@+id/idBtnMode"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/textMode"
+        android:layout_marginTop="5dp"
+        android:layout_marginStart="5dp"/>
+
+</FrameLayout>
