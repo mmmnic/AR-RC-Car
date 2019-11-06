@@ -22,25 +22,17 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal | bottom"
+        android:layout_marginEnd="75dp"
         android:layout_marginBottom="20dp"
         android:backgroundTint="#00FF00"
         android:text="@string/textStart" />
-
-    <Button
-        android:id="@+id/idBtnSetPin"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal | bottom"
-        android:layout_marginStart="100dp"
-        android:layout_marginBottom="20dp"
-        android:text="@string/textPin"/>
 
     <Button
         android:id="@+id/idBtnStop"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal | bottom"
-        android:layout_marginEnd="100dp"
+        android:layout_marginStart="75dp"
         android:layout_marginBottom="20dp"
         android:text="@string/textStop"
         />
@@ -50,7 +42,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/textMode"
-        android:layout_marginTop="5dp"
-        android:layout_marginStart="5dp"/>
+        android:layout_marginTop="10dp"
+        android:layout_marginStart="10dp"/>
 
 </FrameLayout>

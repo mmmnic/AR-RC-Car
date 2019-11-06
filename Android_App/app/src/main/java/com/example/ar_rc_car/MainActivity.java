@@ -26,8 +26,8 @@ import com.google.ar.sceneform.ux.TransformableNode;
 public class MainActivity extends AppCompatActivity {
     private ArFragment arFragment;
     private Button btnStopSign;
+    private int stopFlag = 0;
     private Button btnStartSign;
-    private Button btnPinSign;
     private Button btnMode;
     private AlertDialog.Builder builderSingle;
 
@@ -42,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
         // Config buttons
         configBtnMode();
         configBtnStop();
-        configBtnPin();
+        setPin();
 
     }
 
@@ -60,51 +60,49 @@ public class MainActivity extends AppCompatActivity {
     private void init()
     {
         arFragment   = (ArFragment) getSupportFragmentManager().findFragmentById(R.id.sceneform_ux_fragment);
-        btnPinSign   = (Button) findViewById(R.id.idBtnSetPin);
         btnStartSign = (Button) findViewById(R.id.idBtnStart);
         btnStopSign  = (Button) findViewById(R.id.idBtnStop);
         btnMode      = (Button) findViewById(R.id.idBtnMode);
     }
 
-    private void configBtnPin()
-    {
-        // Set button Pin
-        btnPinSign.setOnClickListener(view -> {
-            arFragment.setOnTapArPlaneListener(((hitResult, plane, motionEvent) -> {
-                Anchor anchor = hitResult.createAnchor();
-                ModelRenderable.builder()
-                        .setSource(this, Uri.parse("Golf_tee.sfb"))
-                        .build()
-                        .thenAccept(modelRenderable -> addModelToScene(anchor, modelRenderable,3.5f, 3))
-                        .exceptionally(throwable -> {
-                            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                            builder.setMessage(throwable.getMessage())
-                                    .show();
-                            return null;
-                        });
-            }));
-            Toast.makeText(this, "Set pin", Toast.LENGTH_SHORT).show();
-        });
+    private void setPin() {
+
+        arFragment.setOnTapArPlaneListener(((hitResult, plane, motionEvent) -> {
+            Anchor anchor = hitResult.createAnchor();
+            ModelRenderable.builder()
+                    .setSource(this, Uri.parse("Golf_tee.sfb"))
+                    .build()
+                    .thenAccept(modelRenderable -> addModelToScene(anchor, modelRenderable, 3.5f, 3))
+                    .exceptionally(throwable -> {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                        builder.setMessage(throwable.getMessage())
+                                .show();
+                        return null;
+                    });
+        }));
     }
 
     private void configBtnStop()
     {
         // Set button stop
         btnStopSign.setOnClickListener(view -> {
-            arFragment.setOnTapArPlaneListener(((hitResult, plane, motionEvent) -> {
-                Anchor anchor = hitResult.createAnchor();
-                ModelRenderable.builder()
-                        .setSource(this, Uri.parse("stopSign.sfb"))
-                        .build()
-                        .thenAccept(modelRenderable -> addModelToScene(anchor, modelRenderable,0.1f, 0.05f))
-                        .exceptionally(throwable -> {
-                            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                            builder.setMessage(throwable.getMessage())
-                                    .show();
-                            return null;
-                        });
-            }));
-            Toast.makeText(this, "Set stop pin", Toast.LENGTH_SHORT).show();
+                arFragment.setOnTapArPlaneListener(((hitResult, plane, motionEvent) -> {
+                    if (stopFlag == 0) {
+                        Anchor anchor = hitResult.createAnchor();
+                        ModelRenderable.builder()
+                                .setSource(this, Uri.parse("stopSign.sfb"))
+                                .build()
+                                .thenAccept(modelRenderable -> addModelToScene(anchor, modelRenderable, 0.1f, 0.05f))
+                                .exceptionally(throwable -> {
+                                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                                    builder.setMessage(throwable.getMessage())
+                                            .show();
+                                    return null;
+                                });
+                        stopFlag = 1;
+                    }
+                }));
+                Toast.makeText(this, "Set stop pin", Toast.LENGTH_SHORT).show();
         });
     }
 
@@ -134,21 +132,12 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         strName = arrayAdapter.getItem(which);
-                        /*
-                        AlertDialog.Builder builderInner = new AlertDialog.Builder(MainActivity.this);
-                        builderInner.setIcon(R.drawable.icon_connect_car);
-                        builderInner.setTitle("Select connection mode");
-                        builderInner.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog,int which) {
-
-                                // Enter config mode code in here
-                                dialog.dismiss();
-                            }
-                        });
-                        builderInner.show();
-                        */
                         Toast.makeText(MainActivity.this, strName + " Mode is selected", Toast.LENGTH_SHORT).show();
+//                        if (which == 0)
+//                        {
+//                            Intent bluetoothPicker = new Intent("android.bluetooth.devicepicker.action.LAUNCH");
+//                            startActivity(bluetoothPicker);
+//                        }
                     }
                 });
                 builderSingle.show();
