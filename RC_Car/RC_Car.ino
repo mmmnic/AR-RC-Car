@@ -12,10 +12,10 @@
 #define BT_RX       D7
 #define angleDelay  23
 /* ------------- GLOBAL PARA ------------- */
-SoftwareSerial bluetooth(BT_TX, BT_RX);
+//SoftwareSerial bluetooth(BT_TX, BT_RX);
+SoftwareSerial bluetooth(BT_RX, BT_TX);
 
 void setup() {
-  // Setup pin
   pinMode(AIN2, OUTPUT);
   pinMode(PWMA, OUTPUT);
   pinMode(AIN1, OUTPUT);
@@ -27,50 +27,20 @@ void setup() {
 
   // Serial setup
   Serial.begin(9600);
-  // Setup serial for bluetooth
   bluetooth.begin(9600);
   Serial.println("Config done");
+
+  // Wait for bluetooth
   while (!bluetooth);
-  
-  Serial.println("Enter AT commands:");
+  Serial.println("Finished");
 
   // Setup motor direction
   setDirection(1,1);
 }
 
 void loop() {
-  turn(90);
-  delay(1000);
-  turn(90);
-  delay(1000);
-  turn(90);
-  delay(1000);
-  turn(90);
-  delay(1000);
-  turn(-90);
-  delay(1000);
-  turn(-90);
-  delay(1000);
-  turn(-90);
-  delay(1000);
-  turn(-90);
-  delay(1000);
-  turn(180);
-  delay(1000);
-  turn(180);
-  delay(1000);
-  turn(180);
-  delay(1000);
-  turn(180);
-  delay(1000);
-  turn(-180);
-  delay(1000);
-  turn(-180);
-  delay(1000);
-  turn(-180);
-  delay(1000);
-  turn(-180);
-  delay(1000);
+  Serial.println(bluetooth.read()); //debug
+  delay(100);
 }
 
 void turn(float TurnAngle)

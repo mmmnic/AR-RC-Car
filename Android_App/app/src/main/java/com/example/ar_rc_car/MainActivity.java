@@ -2,19 +2,14 @@ package com.example.ar_rc_car;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-
-import android.app.Dialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Adapter;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.ar.core.Anchor;
@@ -30,6 +25,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btnStartSign;
     private Button btnMode;
     private AlertDialog.Builder builderSingle;
+    BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +41,6 @@ public class MainActivity extends AppCompatActivity {
         setPin();
 
     }
-
     private void addModelToScene(Anchor anchor, ModelRenderable modelRenderable, float MaxScale, float MinScale) {
         AnchorNode anchorNode = new AnchorNode(anchor);
         TransformableNode transformableNode = new TransformableNode(arFragment.getTransformationSystem());
@@ -132,16 +127,38 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         strName = arrayAdapter.getItem(which);
-                        Toast.makeText(MainActivity.this, strName + " Mode is selected", Toast.LENGTH_SHORT).show();
-//                        if (which == 0)
-//                        {
-//                            Intent bluetoothPicker = new Intent("android.bluetooth.devicepicker.action.LAUNCH");
-//                            startActivity(bluetoothPicker);
-//                        }
+                        Toast.makeText(MainActivity.this, strName + " mode is selected", Toast.LENGTH_SHORT).show();
+                        if (which == 0) {
+                            turnOnBluetooth();
+                            // Open Device list to check bluetooth status and connect device
+                            if (bluetoothAdapter.isEnabled()) {
+                                Intent newIntent = new Intent(MainActivity.this, BluetoothActivity.class);
+                                startActivity(newIntent);
+                            }
+
+                        }
                     }
                 });
                 builderSingle.show();
             }
         });
+    }
+
+    private void turnOnBluetooth()
+    {
+        if(bluetoothAdapter == null)
+        {
+            //Show a mensag. that the device has no bluetooth adapter
+            Toast.makeText(getApplicationContext(), "Bluetooth Device Not Available", Toast.LENGTH_LONG).show();
+
+            //finish apk
+            finish();
+        }
+        else if(!bluetoothAdapter.isEnabled())
+        {
+            //Ask to the user turn the bluetooth on
+            Intent turnBTon = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(turnBTon,1);
+        }
     }
 }

@@ -4,5 +4,7 @@
     <string name="textStop">Stop Pin</string>
     <string name="textPin">Pin</string>
     <string name="textMode">Mode</string>
+    <string name="textPairedDevices">Paired Devices</string>
+    <string name="textDisconnect">Disconnect</string>
     <string name="textBluetoothDevices">Bluetooth Devices</string>
 </resources>
