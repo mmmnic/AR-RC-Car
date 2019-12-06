@@ -1,6 +1,5 @@
 package com.example.ar_rc_car;
 
-import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
@@ -92,7 +91,7 @@ public class BluetoothActivity extends AppCompatActivity
 
     private void Disconnect()
     {
-        if (btSocket!=null) //If the btSocket is busy
+        if (btSocket!=null) //If the btSocket is busy3
         {
             try
             {

@@ -63,6 +63,7 @@
     file: 'sampleData/stopSign.obj',
     name: 'stopSign',
     recenter: 'root',
+    scale: '0.08',
   },
   samplers: [
     {

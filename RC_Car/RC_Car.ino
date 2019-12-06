@@ -12,7 +12,6 @@
 #define BT_RX       D7
 #define angleDelay  23
 /* ------------- GLOBAL PARA ------------- */
-//SoftwareSerial bluetooth(BT_TX, BT_RX);
 SoftwareSerial bluetooth(BT_RX, BT_TX);
 
 void setup() {
@@ -26,7 +25,9 @@ void setup() {
   pinMode(BT_TX, INPUT);
 
   // Serial setup
+  // Open serial to computer
   Serial.begin(9600);
+  // Start bluetooth
   bluetooth.begin(9600);
   Serial.println("Config done");
 
@@ -39,8 +40,7 @@ void setup() {
 }
 
 void loop() {
-  Serial.println(bluetooth.read()); //debug
-  delay(100);
+  // Xử lý code
 }
 
 void turn(float TurnAngle)

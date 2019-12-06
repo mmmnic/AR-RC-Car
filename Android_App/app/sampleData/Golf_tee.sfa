@@ -37,6 +37,7 @@
     file: 'sampleData/Golf_tee.obj',
     name: 'Golf_tee',
     recenter: 'root',
+    scale: '2.5',
   },
   version: '0.54:2',
 }
