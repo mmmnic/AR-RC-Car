@@ -7,4 +7,7 @@
     <string name="textPairedDevices">Paired Devices</string>
     <string name="textDisconnect">Disconnect</string>
     <string name="textBluetoothDevices">Bluetooth Devices</string>
+    <string name="textEnterServerLink">Enter server URL</string>
+    <string name="textEnter">Enter</string>
+    <string name="textCancle">Cancel</string>
 </resources>

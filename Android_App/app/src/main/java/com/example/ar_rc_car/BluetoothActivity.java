@@ -54,6 +54,17 @@ public class BluetoothActivity extends AppCompatActivity
         });
     }
 
+    public void sendBluetooth(String data)
+    {
+        if (btSocket != null) {
+            try {
+                btSocket.getOutputStream().write(data.getBytes());
+            } catch (IOException e) {
+                msg("Error");
+            }
+        }
+    }
+
     private void pairedDevicesList()
     {
         pairedDevices = bluetoothAdapter.getBondedDevices();

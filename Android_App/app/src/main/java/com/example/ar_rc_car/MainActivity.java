@@ -18,6 +18,10 @@ import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.rendering.ViewRenderable;
 import com.google.ar.sceneform.ux.ArFragment;
+import com.github.nkzawa.socketio.client.IO;
+import com.github.nkzawa.socketio.client.Socket;
+import java.net.URISyntaxException;
+import java.text.DecimalFormat;
 
 public class MainActivity extends AppCompatActivity {
     private ArFragment arFragment;
@@ -27,15 +31,23 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvLocation;
     private TextView tvAngle;
     private TextView tvDirection;
-    private AlertDialog.Builder builderSingle;
+    private TextView tvMode;
     BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     final int amountPoint = 10;
     Vector3 pointPosition[] = new Vector3[amountPoint];
     AnchorNode anchorNode[] = new AnchorNode[amountPoint];
+    AnchorNode textNode[]   = new AnchorNode[amountPoint];
     float distanceArray[]   = new float[amountPoint];
     int   angleArray[]      = new int[amountPoint];
-    int   direction[]       = new int[amountPoint];
+    int   directionArray[]       = new int[amountPoint];
     int   readyNode = 0;
+    int   mode = 1; // mode 0: bluetooth, mode 1: internet
+    private Socket mSocket;
+    {
+        try {
+            mSocket = IO.socket("https://ar-rc-car.herokuapp.com/"); //<-- Gán link tại đây
+        } catch (URISyntaxException e) {}
+    }
 
 
     @Override
@@ -45,6 +57,9 @@ public class MainActivity extends AppCompatActivity {
 
         // initial
         init();
+
+        // check current mode
+        checkMode();
 
         // Config buttons
         configBtnMode();
@@ -61,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
     private void init()
     {
         angleArray[0] = 0;
-        direction[0]  = 0;
+        directionArray[0]  = 0;
         arFragment      = (ArFragment) getSupportFragmentManager().findFragmentById(R.id.sceneform_ux_fragment);
         btnStartSign    = (Button) findViewById(R.id.idBtnStart);
         btnDeletePin    = (Button) findViewById(R.id.idBtnDelete);
@@ -69,6 +84,11 @@ public class MainActivity extends AppCompatActivity {
         tvLocation      = (TextView) findViewById(R.id.tv_Location);
         tvAngle         = (TextView) findViewById(R.id.tv_Angle);
         tvDirection     = (TextView) findViewById(R.id.tv_Direction);
+        tvMode          = (TextView) findViewById(R.id.tv_mode);
+
+        // conect to socket
+        if (!mSocket.connected())
+            mSocket.connect();
     }
 
     private void setARObject() {
@@ -103,16 +123,16 @@ public class MainActivity extends AppCompatActivity {
         // AnchorNode to get position
         AnchorNode nodeAnchored = new AnchorNode(anchor);
         // AnchorNode to set position
-        AnchorNode tempNode = new AnchorNode();
-        tempNode.setRenderable(viewRenderable);
-        tempNode.setLocalPosition(new Vector3(nodeAnchored.getLocalPosition().x,(nodeAnchored.getLocalPosition().y + 0.3f),nodeAnchored.getLocalPosition().z));
-        arFragment.getArSceneView().getScene().addChild(tempNode);
+        textNode[readyNode-1] = new AnchorNode();
+        textNode[readyNode-1].setRenderable(viewRenderable);
+        textNode[readyNode-1].setLocalPosition(new Vector3(nodeAnchored.getLocalPosition().x,(nodeAnchored.getLocalPosition().y + 0.3f),nodeAnchored.getLocalPosition().z));
+        arFragment.getArSceneView().getScene().addChild(textNode[readyNode-1]);
 
         // Set text
         TextView tvPointLocation = (TextView) viewRenderable.getView();
-        tvPointLocation.setText("x: " + String.format("%.1f", tempNode.getWorldPosition().x) +
-                                "\ny: " + String.format("%.1f", tempNode.getWorldPosition().y) +
-                                "\nz: " + String.format("%.1f", tempNode.getWorldPosition().z));
+        tvPointLocation.setText("x: " + String.format("%.1f", textNode[readyNode-1].getWorldPosition().x) +
+                                "\ny: " + String.format("%.1f", textNode[readyNode-1].getWorldPosition().y) +
+                                "\nz: " + String.format("%.1f", textNode[readyNode-1].getWorldPosition().z));
     }
 
     private void addModelToScene(Anchor anchor, ModelRenderable modelRenderable) {
@@ -125,7 +145,8 @@ public class MainActivity extends AppCompatActivity {
             // get distance of point before & current point
             float tempDistance = getDistance(pointPosition[readyNode-1], pointPosition[readyNode]);
             distanceArray[readyNode-1] = tempDistance;
-            tvLocation.setText(String.valueOf(tempDistance));
+            // remove to setText
+            //tvLocation.setText(String.valueOf(tempDistance));
         }
         else {
             tvLocation.setText("0");
@@ -139,7 +160,7 @@ public class MainActivity extends AppCompatActivity {
             // calculate angle
             tempAngle = getAngle(tempVector3_1, tempVector3_2);
             angleArray[readyNode-1] = tempAngle;
-            tvAngle.setText(String.valueOf(tempAngle));
+            tvAngle.setText(String.valueOf(tempAngle) + "°");
             // check the current point if it on left or right
             tempDirection = getDirection(tempVector3_1, pointPosition[readyNode]);
             if (tempDirection==1){
@@ -147,7 +168,7 @@ public class MainActivity extends AppCompatActivity {
             }
             else
                 tvDirection.setText("Right");
-            direction[readyNode-1] = tempDirection;
+            directionArray[readyNode-1] = tempDirection;
         }
         else {
             tvAngle.setText("0");
@@ -176,7 +197,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private float getDistance(Vector3 v1, Vector3 v2){
+        // Get length
         float distance = Vector3.subtract(v1, v2).length();
+        // short to 2 digit
+        //DecimalFormat decimalFormat = new DecimalFormat();
+        //decimalFormat.setMaximumFractionDigits(2);
+        //distance = Float.valueOf(decimalFormat.format(distance));
         return distance;
     }
 
@@ -187,6 +213,7 @@ public class MainActivity extends AppCompatActivity {
                 readyNode--;
                 distanceArray[readyNode] = 0;
                 arFragment.getArSceneView().getScene().onRemoveChild(anchorNode[readyNode]);
+                arFragment.getArSceneView().getScene().onRemoveChild(textNode[readyNode]);
             }
             if (readyNode<=1)
             {
@@ -197,13 +224,37 @@ public class MainActivity extends AppCompatActivity {
 
     private void clickBtnStart() {
         btnStartSign.setOnClickListener(view -> {
+            String stringDistance   = convertString(distanceArray);
+            String stringAngle      = convertString(angleArray);
+            String stringDirection  = convertString(directionArray);
+            // Convert data & send
+            if (mode == 0) {
+                BluetoothActivity bluetoothActivity = new BluetoothActivity();
+                bluetoothActivity.sendBluetooth(stringDistance);
+                bluetoothActivity.sendBluetooth(stringAngle);
+                bluetoothActivity.sendBluetooth(stringDirection);
+            }
+            else {
+                mSocket.emit("Distance", stringDistance);
+                mSocket.emit("Angle", stringAngle);
+                mSocket.emit("Direction", stringDirection);
+
+//                mSocket.emit("Distance", "abc");
+//                mSocket.emit("Angle", "def");
+//                mSocket.emit("Direction", "ghj");
+                Toast.makeText(getApplicationContext(), "Data is sent", Toast.LENGTH_SHORT).show();
+            }
+
+            // delete Pins
             for (int i = 0; i < readyNode; i++) {
                 pointPosition[i].zero();
+                arFragment.getArSceneView().getScene().onRemoveChild(textNode[i]);
                 arFragment.getArSceneView().getScene().onRemoveChild(anchorNode[i]);
                 distanceArray[i] = 0;
                 angleArray[i] = 0;
-                direction[i] = 0;
+                directionArray[i] = 0;
             }
+            readyNode = 0;
         });
     }
 
@@ -213,12 +264,11 @@ public class MainActivity extends AppCompatActivity {
         btnMode.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                builderSingle = new AlertDialog.Builder(MainActivity.this);
+                AlertDialog.Builder builderSingle = new AlertDialog.Builder(MainActivity.this);
                 builderSingle.setIcon(R.drawable.icon_connect_car);
                 builderSingle.setTitle("Select connection mode");
                 final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(MainActivity.this, android.R.layout.select_dialog_singlechoice);
                 arrayAdapter.add("Bluetooth");
-                arrayAdapter.add("Local LAN");
                 arrayAdapter.add("Internet");
 
                 builderSingle.setNegativeButton("cancel", new DialogInterface.OnClickListener() {
@@ -236,16 +286,26 @@ public class MainActivity extends AppCompatActivity {
                         strName = arrayAdapter.getItem(which);
                         Toast.makeText(MainActivity.this, strName + " mode is selected", Toast.LENGTH_SHORT).show();
                         if (which == 0) {
+                            mode = 0;
                             turnOnBluetooth();
+                            if (mSocket.connected())
+                                mSocket.disconnect();
                             // Open Device list to check bluetooth status and connect device
                             if (bluetoothAdapter.isEnabled()) {
-                                Intent newIntent = new Intent(MainActivity.this, BluetoothActivity.class);
-                                startActivity(newIntent);
+                                Intent startBluetoothIntent = new Intent(MainActivity.this, BluetoothActivity.class);
+                                startActivity(startBluetoothIntent);
                             }
-
+                        }
+                        else {
+                            if (!mSocket.connected())
+                                mSocket.connect();
+                            mode = 1;
+                            if (bluetoothAdapter.isEnabled())
+                                bluetoothAdapter.disable();
                         }
                     }
                 });
+                checkMode();
                 builderSingle.show();
             }
         });
@@ -255,9 +315,8 @@ public class MainActivity extends AppCompatActivity {
     {
         if(bluetoothAdapter == null)
         {
-            //Show a mensag. that the device has no bluetooth adapter
+            //Show a message that the device has no bluetooth adapter
             Toast.makeText(getApplicationContext(), "Bluetooth Device Not Available", Toast.LENGTH_LONG).show();
-
             //finish apk
             finish();
         }
@@ -267,5 +326,39 @@ public class MainActivity extends AppCompatActivity {
             Intent turnBTon = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(turnBTon,1);
         }
+    }
+
+    private String convertString(int[] data)
+    {
+        String tempString = "";
+        for (int i = 0; i < readyNode; i++)
+        {
+            tempString += String.valueOf(data[i]);
+            tempString += ",";
+        }
+        tempString += ";";
+        return tempString;
+    }
+
+    private String convertString(float[] data)
+    {
+        String tempString = "";
+        for (int i = 0; i < readyNode; i++)
+        {
+            tempString += String.valueOf(data[i]);
+            tempString += ",";
+        }
+        tempString += ";";
+        return tempString;
+    }
+
+    private void checkMode()
+    {
+        if (mode == 0)
+        {
+            tvMode.setText("Bluetooth");
+        }
+        else
+            tvMode.setText("Internet");
     }
 }

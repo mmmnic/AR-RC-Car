@@ -1,20 +1,10 @@
 /* ------------- INCLUDE ------------- */
-#include <SoftwareSerial.h>
+#include "RC_Car.h"
 
-/* ------------- DEFINE ------------- */
-#define AIN2        D0
-#define PWMA        D1
-#define AIN1        D2
-#define BIN1        D3
-#define BIN2        D4
-#define PWMB        D5
-#define BT_TX       D6
-#define BT_RX       D7
-#define angleDelay  23
-/* ------------- GLOBAL PARA ------------- */
-SoftwareSerial bluetooth(BT_RX, BT_TX);
 
 void setup() {
+  long Time_Wifi;
+  
   pinMode(AIN2, OUTPUT);
   pinMode(PWMA, OUTPUT);
   pinMode(AIN1, OUTPUT);
@@ -25,55 +15,164 @@ void setup() {
   pinMode(BT_TX, INPUT);
 
   // Serial setup
-  // Open serial to computer
+  // Open serial for debugging
   Serial.begin(9600);
-  // Start bluetooth
+  
+  /* ----- START BLUETOOTH ----- */
   bluetooth.begin(9600);
-  Serial.println("Config done");
-
   // Wait for bluetooth
   while (!bluetooth);
-  Serial.println("Finished");
+  Serial.println("Config bluetooth done");
+  
+  /* ----- START WIFI ----- */
+  Serial.println("Connecting Wifi");
+  Serial.print("Connecting to: ");
+  Serial.println(ssid);
+  Time_Wifi=millis();
+  WiFi.begin(ssid, password);
 
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+    if(millis()-Time_Wifi>30000){
+//      ESP.restart();
+      break;
+    }
+  }
+
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+
+  /* ----- START SOCKET ----- */
+  Socket.on("DistanceDown",listenDistance);
+  Socket.on("AngleDown",listenAngle);
+  Socket.on("DirectionDown",listenDirection);
+  Socket.begin(Host_Socket, Port_Socket, "/socket.io/?transport=websocket");
+
+  
   // Setup motor direction
   setDirection(1,1);
+
+  Serial.println("----------------- ALL DONE -----------------");
 }
 
 void loop() {
-  // Xử lý code
+  Socket.loop();
+  if (isReceived == 1)
+  {
+    isReceived = 0;
+    for (int i = 0; i< amount; i++)
+    {
+       Serial.print("---------- ");
+       Serial.print(i);
+       Serial.println(" ----------");
+       Serial.print("Angle: ");
+       Serial.println(parsed_Angle[i]);
+       Serial.print("Direction: ");
+       Serial.println(parsed_Direction[i]);
+       Serial.print("Distance: ");
+       Serial.println(parsed_Distance[i]);
+       turn(parsed_Angle[i], parsed_Direction[i]);
+       runStraight(parsed_Distance[i]);
+       parsed_Angle[i] = 0;
+       parsed_Direction[i] = 0;
+       parsed_Distance[i] = 0;
+       Socket.loop();
+       if (isReceived == 1)
+          break;
+    }
+  }
 }
 
-void turn(float TurnAngle)
+int *parseStringToInt(char *data)
+{
+  int *arrayInt = new int[10];
+  int count = 0;
+  String tempStringInt = "";
+  for (int i = 0; i < strlen(data); i++)
+  {
+    if (data[i] == ';')
+      break;
+    if (data[i] == ',')
+    {
+      arrayInt[count] = tempStringInt.toInt();
+      count++;
+      tempStringInt = "";
+    }
+    else
+    {
+      tempStringInt += data[i];
+    }
+    
+    // if ; is end string
+    if (data[i] == ';')
+      break;
+  }
+  return arrayInt;
+}
+
+float *parseStringToFloat(char *data)
+{
+  float *arrayFloat = new float[10];
+  int count = 0;
+  String tempStringInt = "";
+  for (int i = 0; i < strlen(data); i++)
+  {
+    if (data[i] == ',')
+    {
+      arrayFloat[count] = tempStringInt.toFloat();
+      count++;
+      tempStringInt = "";
+    }
+    else
+    {
+      tempStringInt += data[i];
+    }
+    // if ; is end string
+    if (data[i] == ';')
+      break;
+  }
+  amount = count;
+  return arrayFloat;
+}
+
+
+void turn(float TurnAngle, int Direction)
 {
   /* NOTE
-   * Set 1 motor on and delay 500ms = turn 22.5 degree
+   * Set 1 motor on and delay 600ms = turn 90 degree
+   * 1 degree ~ 6.6ms
+   * Direction = 1 is left, 0 is right
    */
-  TurnAngle /= angleDelay;
-  if (TurnAngle >= 0)
+  if (Direction == 1)
   {
-     setMotor(255,0);
-     delay(500*TurnAngle);
+     setMotor(0,255);
+     delay(TimePerAg*TurnAngle);
   }
   else
   {
-    TurnAngle = -TurnAngle;
-    setMotor(0,263);
-    delay(500*TurnAngle);
+    setMotor(250,0);
+    delay(TimePerAg*TurnAngle);
   }
   setMotor(0,0);
+  delay(100);
 }
 
-void runStraight(int delayTime)
+void runStraight(float distance)
 {
-  setMotor(255, 255);
-  delay(delayTime);
-  setMotor(0, 0);
+  // convet to centimeter
+  distance *= 100;
+  // start motor
+  setMotor(248, 255);
+  delay(distance/Speed);
+  setMotor(0,0);
+  delay(100);
 }
 
 void setMotor(int MTA, int MTB)
 {
-  if (MTB>8)
-    MTB -= 7;
   analogWrite(PWMA, MTA);
   analogWrite(PWMB, MTB);
 }
@@ -99,5 +198,31 @@ void setDirection(int MT1, int MT2)
   {
     digitalWrite(BIN1, LOW);
     digitalWrite(BIN2, HIGH);
+  }
+}
+
+void listenDistance(const char * payload, size_t length){
+  if(!String(payload)==NULL){
+    char tempString[] = "";
+    strcpy(tempString, payload);
+    parsed_Distance = parseStringToFloat(tempString);
+  }
+}
+
+void listenAngle(const char * payload, size_t length){
+  if(!String(payload)==NULL){
+    char tempString[] = "";
+    strcpy(tempString, payload);
+    parsed_Angle = parseStringToInt(tempString);
+    
+  }
+}
+
+void listenDirection(const char * payload, size_t length){
+  if(!String(payload)==NULL){
+    char tempString[] = "";
+    strcpy(tempString, payload);
+    parsed_Direction = parseStringToInt(tempString);
+    isReceived = 1;
   }
 }
